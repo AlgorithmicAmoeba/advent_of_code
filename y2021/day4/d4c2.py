@@ -1,5 +1,5 @@
 import numpy
-from day4.d4c1 import read_input
+from y2021.day4.d4c1 import read_input
 
 
 if __name__ == "__main__":
