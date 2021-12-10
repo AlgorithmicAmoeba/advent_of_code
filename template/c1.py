@@ -9,7 +9,7 @@ def read_input(filename):
 
 
 if __name__ == "__main__":
-    do_example = False
+    do_example = True
     input_file = "example.txt" if do_example else "input.txt"
 
     for l in read_input(input_file):
