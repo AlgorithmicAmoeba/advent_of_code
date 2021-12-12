@@ -33,10 +33,9 @@ def do_step(m):
     m = m.copy() + 1
 
     flashed_octopi = set()
-    checked = numpy.full_like(m, False)
 
 
-    this_round_checked = (m > 9) ^ checked
+    this_round_checked = (m > 9)
 
     while this_round_checked.any():
         for x, y in zip(*this_round_checked.nonzero()):
@@ -46,7 +45,7 @@ def do_step(m):
             for nx, ny in neighbours(x, y, m):
                 m[nx, ny] += 1
 
-            this_round_checked = (m > 9) ^ checked
+            this_round_checked = (m > 9)
 
     m[m < 0] = 0
 
@@ -77,4 +76,4 @@ if __name__ == "__main__":
         flashes, m = do_step(m)
         i += 1
 
-    print("Part 2:",i)
+    print("Part 2:", i)
