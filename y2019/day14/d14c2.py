@@ -58,7 +58,7 @@ if __name__ == "__main__":
     fuel = 0
     have = collections.defaultdict(int)
 
-    # Binary search to find the last time where r is True
+    # Binary search to find the last time when r is True
     high = 8289275300
     low = 1
 
