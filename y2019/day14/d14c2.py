@@ -58,19 +58,21 @@ if __name__ == "__main__":
     fuel = 0
     have = collections.defaultdict(int)
 
+    # Binary search to find the last time where r is True
     high = 8289275300
     low = 1
 
-    while high > low:
+    while high - low > 1:
         mid = (high + low) // 2
         r = n_fuel(reactions, mid) < 1000000000000
 
         if r:
-            low = mid + 1
+            low = mid
         else:
-            high = mid - 1
+            high = mid
 
     print(n_fuel(reactions, low))
-    print(low, high)
+    print(n_fuel(reactions, low + 1))
+    print(low)
 
 
