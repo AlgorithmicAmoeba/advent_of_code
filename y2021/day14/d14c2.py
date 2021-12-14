@@ -18,15 +18,13 @@ def read_input(filename):
                 sps = count_pairs(l)
             else:
                 p, ins = l.split(' -> ')
-                ps[p] = ins
+                ps[(p[0], p[1])] = ins
 
     return sps, ps, chain
 
 
 def count_pairs(s):
-    sps = collections.defaultdict(int)
-    for first, second in zip(s, s[1:]):
-        sps[first + second] += 1
+    sps = collections.Counter(zip(s, s[1:]))
 
     return sps
 
@@ -37,8 +35,8 @@ def do_poly(chain_pairs, ps):
         f, s = pair
         if pair in ps:
             m = ps[pair]
-            new_chain_pairs[f + m] += n
-            new_chain_pairs[m + s] += n
+            new_chain_pairs[(f, m)] += n
+            new_chain_pairs[(m, s)] += n
         else:
             new_chain_pairs[pair] += n
 
@@ -75,10 +73,8 @@ if __name__ == "__main__":
 
 
     counts = count_chain(start_pairs, first_letter, last_letter)
-    most_commons = counts.most_common(len(counts))
-    m_max, m_min = most_commons[0][1], most_commons[-1][1]
 
-    res = m_max - m_min
+    res = max(counts.values()) - min(counts.values())
 
     print(res)
 
