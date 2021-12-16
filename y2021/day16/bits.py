@@ -30,6 +30,15 @@ class BinString:
     def __bool__(self):
         return self.idx < len(self.bs)
 
+    def __repr__(self):
+        return (
+            f"BinString("
+            f"len={len(self.bs)}, "
+            f"idx={self.idx}, "
+            f"left={self.bs[self.idx:]}"
+            f")"
+        )
+
 
 class Packet:
     def __init__(self, v, t, r):
