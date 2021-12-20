@@ -20,41 +20,79 @@ def array_intersection(l1, l2):
 
 
 class Scanner:
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
+    def __init__(self, sid, ps):
+        self.sid = sid
+        self.ps = ps
+
+        self.rel_scan = None
+        self.shift = numpy.zeros(shape=3)
+        self.orient = numpy.zeros(shape=3)
+        self.orient_neg = numpy.zeros(shape=3)
+
+
+    def orient_ax(self, a, rev):
+        s = -1 if rev else 1
+
 
     def orientations(self):
-        for a in [self.x, self.y, self.z]:
+        for a in range(3):
             for s in [-1, 1]:
-                yield numpy.array(sorted(s * a))
+                yield a, s, numpy.array(sorted(s * self.ps[:, a]))
 
-    def count_same(self, other):
+
+    def count_same_dir(self, other, a):
         m = 0
-        intersections = []
-        x_shift = 0
-        sx = numpy.array(sorted(self.x))
-        for o in other.orientations():
-            for i in range(0, 1000):
-                inter = array_intersection(sx, o + i)
-                if len(inter) > m:
-                    m = len(inter)
-                    intersections = inter
-                    x_shift = i
+        sa = numpy.array(sorted(self.ps[:, a]))
+        for a, s, o in other.orientations():
+            for shift in range(-2001, 2001):
+                intersections = array_intersection(sa, o + shift)
+                if len(intersections) > m:
+                    m = len(intersections)
                     if m >= 12:
-                        return x_shift, intersections
+                        return [shift, a, s]
 
-        return False
+    def overlap(self, other):
+        shift = numpy.zeros(3)
+        orientation = numpy.zeros(3)
+        neg_or = numpy.zeros(3)
 
-    # def
+        for a in range(3):
+            r = self.count_same_dir(other, a)
+            if not r:
+                return False
+
+            shift_i, a_i, s_i = r
+            shift[a] = shift_i
+            orientation[a] = a_i
+            neg_or[a] = s_i
+
+        return shift, orientation, neg_or
+
+    def __repr__(self):
+        return f"Scanner {self.sid}"
+
+    def apply_rots(self):
+
+        app = self
+        while app.rel_scan is not None:
+            idxs = list(app.orient.astype(int))
+            self.ps = self.ps[:, idxs] * app.orient_neg + app.shift
+
+            app = app.rel_scan
+
+
+
+        # self.shift = numpy.zeros(shape=3)
+        # self.orient = numpy.zeros(shape=3)
+        # self.orient_neg = numpy.zeros(shape=3)
 
 
 
 def read_input(filename):
     ss = []
+    sid = 0
     with open(filename, 'r') as f:
-        xs, ys, zs = [], [], []
+        ps = []
         for l in f:
             l = l.strip()
             if l.startswith('---'):
@@ -62,18 +100,50 @@ def read_input(filename):
 
             if l == '':
                 ss.append(
-                    Scanner(numpy.array(xs), numpy.array(ys), numpy.array(zs))
+                    Scanner(sid, numpy.array(ps))
                 )
-                xs, ys, zs = [], [], []
+                ps = []
+                sid += 1
                 continue
 
-            x, y, z = l.split(',')
-            xs.append(int(x))
-            ys.append(int(y))
-            zs.append(int(z))
+            ps.append([int(i) for i in l.split(',')])
 
     return ss
 
+
+def find_groups(ss):
+    found = [ss.pop(0)]
+
+    while ss:
+        print(len(found))
+        for f in found:
+            for idx, s in enumerate(ss):
+                r = f.overlap(s)
+                if not r:
+                    continue
+
+                shift, orientation, neg_or = r
+                s.rel_scan = f
+                s.shift = shift
+                s.orient = orientation
+                s.orient_neg = neg_or
+
+                found.append(ss.pop(idx))
+                break
+
+    for f in found:
+        f.apply_rots()
+
+    return found
+
+
+def beacons(ss):
+    bs = set()
+
+    for s in ss:
+        bs.update(set([tuple(i) for i in s.ps]))
+
+    return len(bs)
 
 
 if __name__ == "__main__":
@@ -82,9 +152,9 @@ if __name__ == "__main__":
 
     scanners = read_input(input_file)
 
-    s0 = scanners[0]
-    s1 = scanners[1]
+    print(len(scanners))
+    scanners = find_groups(scanners)
+    res = beacons(scanners)
 
-    x0 = numpy.array(sorted(s0.x))
-    x1 = numpy.array(sorted(-s1.x))
+    print(res)
 

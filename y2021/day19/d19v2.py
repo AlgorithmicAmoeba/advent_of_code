@@ -1,22 +1,6 @@
+import collections
 import itertools
-
 import numpy
-
-
-def array_intersection(l1, l2):
-    c = []
-    idx1, idx2 = 0, 0
-    while idx1 < len(l1) and idx2 < len(l2):
-        if l1[idx1] == l2[idx2]:
-            c.append(l1[idx1])
-            idx1 += 1
-            idx2 += 1
-        elif l1[idx1] < l2[idx2]:
-            idx1 += 1
-        else:
-            idx2 += 1
-
-    return c
 
 
 class Scanner:
@@ -29,44 +13,28 @@ class Scanner:
         self.orient = numpy.zeros(shape=3)
         self.orient_neg = numpy.zeros(shape=3)
 
-
-    def orient_ax(self, a, rev):
-        s = -1 if rev else 1
+        self.loc = numpy.zeros(shape=3)
 
 
     def orientations(self):
-        for a in range(3):
-            for s in [-1, 1]:
-                yield a, s, numpy.array(sorted(s * self.ps[:, a]))
+        for p in itertools.permutations([0, 1, 2], 3):
+            for s in itertools.product([-1, 1], [-1, 1], [-1, 1]):
+                yield self.ps[:, p] * s, p, s
 
 
-    def count_same_dir(self, other, a):
-        m = 0
-        sa = numpy.array(sorted(self.ps[:, a]))
-        for a, s, o in other.orientations():
-            for shift in range(-2001, 2001):
-                intersections = array_intersection(sa, o + shift)
-                if len(intersections) > m:
-                    m = len(intersections)
-                    if m >= 12:
-                        return [shift, a, s]
+    def overlap(self, other, ):
+        for ops, pos, sign in other.orientations():
+            c = collections.Counter()
 
-    def overlap(self, other):
-        shift = numpy.zeros(3)
-        orientation = numpy.zeros(3)
-        neg_or = numpy.zeros(3)
+            ds = numpy.repeat(
+                self.ps[:, :, None], ops.shape[0], axis=2
+            ).swapaxes(1, 2) - ops
 
-        for a in range(3):
-            r = self.count_same_dir(other, a)
-            if not r:
-                return False
-
-            shift_i, a_i, s_i = r
-            shift[a] = shift_i
-            orientation[a] = a_i
-            neg_or[a] = s_i
-
-        return shift, orientation, neg_or
+            shift, count = collections.Counter(
+                tuple(ds[x, y]) for x, y in numpy.ndindex(ds.shape[:2])
+            ).most_common(1)[0]
+            if count >= 12:
+                return shift, pos, sign
 
     def __repr__(self):
         return f"Scanner {self.sid}"
@@ -75,16 +43,10 @@ class Scanner:
 
         app = self
         while app.rel_scan is not None:
-            idxs = list(app.orient.astype(int))
-            self.ps = self.ps[:, idxs] * app.orient_neg + app.shift
+            self.ps = self.ps[:, app.orient] * app.orient_neg + app.shift
+            self.loc = self.loc[(app.orient, )] * app.orient_neg + app.shift
 
             app = app.rel_scan
-
-
-
-        # self.shift = numpy.zeros(shape=3)
-        # self.orient = numpy.zeros(shape=3)
-        # self.orient_neg = numpy.zeros(shape=3)
 
 
 
@@ -137,6 +99,16 @@ def find_groups(ss):
     return found
 
 
+def max_man(ss):
+    m = 0
+    for s1, s2 in itertools.combinations(ss, 2):
+        mi = sum(abs(s1.loc - s2.loc))
+
+        m = max(m, mi)
+
+    return m
+
+
 def beacons(ss):
     bs = set()
 
@@ -147,25 +119,15 @@ def beacons(ss):
 
 
 if __name__ == "__main__":
-    do_example = True
+    do_example = False
     input_file = "example.txt" if do_example else "input.txt"
 
     scanners = read_input(input_file)
 
-    # s0 = scanners[0]
-    # s1 = scanners[1]
-    #
-    # shift, orient, neg = s1.overlap(s0)
-    # s0.shift = shift
-    # s0.orient = orient
-    # s0.orient_neg = neg
-    #
-    # s0.apply_rots()
-    #
-    # print(beacons([s0, s1]))
-    print(len(scanners))
     scanners = find_groups(scanners)
-    res = beacons(scanners)
+    print(beacons(scanners))
+
+    res = max_man(scanners)
 
     print(res)
 
