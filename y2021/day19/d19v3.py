@@ -25,13 +25,16 @@ class Scanner:
     def overlap(self, other, ):
         for ops, pos, sign in other.orientations():
             c = collections.Counter()
-            for p in self.ps:
-                for op in ops:
-                    d = tuple(p - op)
-                    c[d] += 1
 
-                    if c[d] >= 12:
-                        return d, pos, sign
+            ds = numpy.repeat(
+                self.ps[:, :, None], ops.shape[0], axis=2
+            ).swapaxes(1, 2) - ops
+
+            shift, count = collections.Counter(
+                tuple(ds[x, y]) for x, y in numpy.ndindex(ds.shape[:2])
+            ).most_common(1)[0]
+            if count >= 12:
+                return shift, pos, sign
 
     def __repr__(self):
         return f"Scanner {self.sid}"
@@ -116,7 +119,7 @@ def beacons(ss):
 
 
 if __name__ == "__main__":
-    do_example = True
+    do_example = False
     input_file = "example.txt" if do_example else "input.txt"
 
     scanners = read_input(input_file)
