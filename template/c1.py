@@ -12,5 +12,4 @@ if __name__ == "__main__":
     do_example = True
     input_file = "example.txt" if do_example else "input.txt"
 
-    for l in read_input(input_file):
-        print(l)
+    a = read_input(input_file)
