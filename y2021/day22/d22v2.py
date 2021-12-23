@@ -1,27 +1,25 @@
 import itertools
-
 import numpy
+import parse
 
 
 def read_input(filename):
     ops = []
-    ranges = []
+    rs = []
+
+    p = parse.compile(
+        "{:l} x={:d}..{:d},y={:d}..{:d},z={:d}..{:d}\n"
+    )
     with open(filename, 'r') as f:
         for l in f:
-            l = l.strip()
-            op, rs = l.split(' ')
+            op, x1, x2, y1, y2, z1, z2 = p.parse(l)
             ops.append(True if op == 'on' else False)
 
-            vs = []
-            cs = x, y, z = rs.split(',')
-            for c in cs:
-                _, iis = c.split('=')
-                li, hi = iis.split('..')
-                vs.append((int(li) - 1, int(hi)))
+            rs.append(
+                ((x1 - 1, x2), (y1 - 1, y2), (z1 - 1, z2))
+            )
 
-            ranges.append(tuple(vs))
-
-    return ops, ranges
+    return ops, rs
 
 
 def are_overlapping(cube1, cube2):
